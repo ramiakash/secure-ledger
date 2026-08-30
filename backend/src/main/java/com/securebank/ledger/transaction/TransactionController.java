@@ -1,5 +1,6 @@
 package com.securebank.ledger.transaction;
 
+import com.securebank.ledger.error.ApiExceptions.InvalidQueryException;
 import com.securebank.ledger.common.AuthenticatedUser;
 import com.securebank.ledger.transaction.dto.CreateTransactionRequest;
 import com.securebank.ledger.transaction.dto.PageResponse;
@@ -50,16 +51,16 @@ public class TransactionController {
         UUID ownerId = AuthenticatedUser.currentUserId();
 
         if (page < 0) {
-            throw new IllegalArgumentException("page must not be negative");
+            throw new InvalidQueryException("page must not be negative");
         }
         if (size < 1 || size > MAX_PAGE_SIZE) {
-            throw new IllegalArgumentException("size must be between 1 and " + MAX_PAGE_SIZE);
+            throw new InvalidQueryException("size must be between 1 and " + MAX_PAGE_SIZE);
         }
         if (!SORTABLE.contains(sort)) {
-            throw new IllegalArgumentException("sort must be one of " + SORTABLE);
+            throw new InvalidQueryException("sort must be one of " + SORTABLE);
         }
         if (from != null && to != null && from.isAfter(to)) {
-            throw new IllegalArgumentException("'from' must not be after 'to'");
+            throw new InvalidQueryException("'from' must not be after 'to'");
         }
 
         Sort.Direction dir = "asc".equalsIgnoreCase(direction)
