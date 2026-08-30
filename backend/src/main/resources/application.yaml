@@ -1,0 +1,16 @@
+ledger:
+  jwt:
+    secret: ${JWT_SECRET:gPLBo6diw8ef+Akezym6geqyBjEO1Kbq+ipxSH1QF/4=}
+    issuer: secure-ledger
+    access-token-ttl: PT1H
+spring:
+  application:
+    name: ledger
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ledger
+    username: ledger_app
+    password: ledger_local_pw
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
