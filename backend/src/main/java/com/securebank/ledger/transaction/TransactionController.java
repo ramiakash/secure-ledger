@@ -5,6 +5,11 @@ import com.securebank.ledger.common.AuthenticatedUser;
 import com.securebank.ledger.transaction.dto.CreateTransactionRequest;
 import com.securebank.ledger.transaction.dto.PageResponse;
 import com.securebank.ledger.transaction.dto.TransactionResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,6 +27,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/transactions")
+@Tag(name = "Transactions", description = "Record and review the authenticated user's ledger")
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -35,6 +41,25 @@ public class TransactionController {
     private static final Set<String> SORTABLE = Set.of("bookedAt", "amount", "createdAt");
     private static final int MAX_PAGE_SIZE = 100;
 
+
+    @Operation(
+            summary = "List the authenticated user's transactions",
+            description = """
+                    Returns a page of transactions, newest first by default.
+
+                    The optional `from` and `to` dates are inclusive of both endpoints and are
+                    served by a composite index on (user_id, booked_at DESC), so the range is a
+                    contiguous index scan with no sort step.
+
+                    There is no parameter for selecting another user's ledger.
+                    """)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "A page of transactions"),
+            @ApiResponse(responseCode = "400", description = "Invalid range or sort field",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid token",
+                    content = @Content)
+    })
     @GetMapping
     public PageResponse<TransactionResponse> list(
             @RequestParam(required = false)
@@ -80,6 +105,19 @@ public class TransactionController {
                 transactionService.findPage(ownerId, fromInstant, toExclusive, pageable),
                 TransactionResponse::from);
     }
+
+    @Operation(
+            summary = "Record a transaction",
+            description = "Creates a transaction owned by the authenticated user. "
+                    + "The owner is taken from the bearer token; there is no request "
+                    + "field capable of specifying one.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Transaction recorded"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid token",
+                    content = @Content),
+            @ApiResponse(responseCode = "422", description = "Validation failed",
+                    content = @Content)
+    })
     @PostMapping
     public ResponseEntity<TransactionResponse> create(
            @Valid @RequestBody CreateTransactionRequest request) {
