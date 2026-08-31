@@ -10,6 +10,27 @@ services:
       - "5433:5432"
     volumes:
       - ledger_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger_app -d ledger"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: ledger-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ledger
+      DB_USER: ledger_app
+      DB_PASSWORD: ledger_local_pw
+      JWT_SECRET: docker-compose-development-signing-secret-32b
+    ports:
+      - "8080:8080"
 
 volumes:
   ledger_pgdata:
